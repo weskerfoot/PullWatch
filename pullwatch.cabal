@@ -1,0 +1,91 @@
+-- This file has been generated from package.yaml by hpack version 0.28.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 65e5b8785957a279870deb40c25b0be9f89d41c4d49c1006570f69ee0876450e
+
+name:           pullwatch
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/weskerfoot/pullwatch#readme>
+homepage:       https://github.com/weskerfoot/pullwatch#readme
+bug-reports:    https://github.com/weskerfoot/pullwatch/issues
+author:         Wesley Kerfoot
+maintainer:     wes@wesk.tech
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+extra-source-files:
+    ChangeLog.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/weskerfoot/pullwatch
+
+library
+  exposed-modules:
+      PullWatch.PullWatch
+    , PullWatch.Environment
+  other-modules:
+      Paths_pullwatch
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , github
+    , base-compat
+    , text
+    , bytestring
+    , libiserv
+    , vector
+    , async
+    , containers
+    , data-default
+    , fdo-notify
+  default-language: Haskell2010
+
+executable pullwatch-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_pullwatch
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , pullwatch
+    , github
+    , base-compat
+    , text
+    , bytestring
+    , libiserv
+    , vector
+    , async
+    , containers
+    , data-default
+    , fdo-notify
+  default-language: Haskell2010
+
+test-suite pullwatch-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_pullwatch
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , pullwatch
+    , github
+    , base-compat
+    , text
+    , bytestring
+    , libiserv
+    , vector
+    , async
+    , containers
+    , data-default
+    , fdo-notify
+  default-language: Haskell2010
