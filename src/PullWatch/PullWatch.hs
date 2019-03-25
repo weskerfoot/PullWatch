@@ -17,25 +17,24 @@ import GitHub.Data.PullRequests
      , simplePullRequestBody
     )
 
-import Prelude.Compat
-import GitHub.Data.Id (untagId)
-import GitHub.Data.Name (untagName)
-import System.Environment (lookupEnv)
-import Data.Vector ((!))
-import DBus.Notify
-import Control.Concurrent.Async
-import Control.Concurrent (threadDelay)
 import Control.Applicative
+import Control.Concurrent (threadDelay)
+import Control.Concurrent.Async
+import DBus.Notify
+import Data.Default
+import Data.IntMap (IntMap, (\\))
 import Data.Maybe
 import Data.Monoid
-import Data.IntMap (IntMap, (\\))
-import Data.Default
+import Data.Vector ((!))
+import GitHub.Data.Id (untagId)
+import GitHub.Data.Name (untagName)
+import Prelude.Compat
+import System.Environment (lookupEnv)
 
-import qualified GitHub.Endpoints.PullRequests as PR
-import qualified GitHub.Auth as Auth
-import qualified Data.Text as T
 import qualified Data.IntMap as IntMap
-
+import qualified Data.Text as T
+import qualified GitHub.Auth as Auth
+import qualified GitHub.Endpoints.PullRequests as PR
 
 type PullRequests = IntMap PullRequest
 
@@ -44,20 +43,12 @@ data PullRequest = PR {
                   , prTitle :: T.Text
                   , prRepo :: T.Text
                   , prOwner :: T.Text
-                  , prID :: Integer }
+                  , prID :: Integer
+                  }
 
                   deriving (Show)
 
-instance Default PullRequest where
-  def = PR {
-            prText = ""
-          , prTitle = ""
-          , prRepo = ""
-          , prOwner = ""
-          , prID = 0
-  }
-
-fiveMinutes = 3000000
+tenMinutes = 300000000*2
 
 getPRId = Just . fromIntegral . untagId . simplePullRequestId . (! 0)
 
@@ -116,12 +107,14 @@ monitorPRs previous repos = do
   let difference = do {
     currentPRs' <- currentPRs;
     previousPRs' <- previous;
-    return $ IntMap.elems (previousPRs' \\ currentPRs');
+    return $ IntMap.elems (currentPRs' \\ previousPRs');
   }
 
-  maybe (return ()) (mapM_ (notifyPR client)) ((map toNote) <$> difference)
+  maybe (return ())
+        (mapM_ (notifyPR client))
+        ((map toNote) <$> difference)
 
-  threadDelay fiveMinutes
+  threadDelay tenMinutes
   monitorPRs currentPRs repos
 
 -- Helpers functions for converting to an IntMap
