@@ -47,6 +47,14 @@ data PullRequest = PR {
                   }
 
                   deriving (Show)
+instance Default PullRequest where
+  def = PR {
+            prText = ""
+          , prTitle = ""
+          , prRepo = ""
+          , prOwner = ""
+          , prID = 0
+  }
 
 tenMinutes = 300000000*2
 
