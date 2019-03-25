@@ -4,12 +4,11 @@
 
 module PullWatch.PullWatch
     (  getLatest
-     , getLatestAsync
      , getLatestPRs
      , prText
      , prTitle
      , prID
-     , toNote
+     , monitorPRs
     ) where
 
 import GitHub.Data.PullRequests
@@ -25,13 +24,20 @@ import System.Environment (lookupEnv)
 import Data.Vector ((!))
 import DBus.Notify
 import Control.Concurrent.Async
+import Control.Concurrent (threadDelay)
 import Control.Applicative
 import Data.Maybe
 import Data.Monoid
+import Data.IntMap (IntMap, (\\))
+import Data.Default
 
 import qualified GitHub.Endpoints.PullRequests as PR
 import qualified GitHub.Auth as Auth
 import qualified Data.Text as T
+import qualified Data.IntMap as IntMap
+
+
+type PullRequests = IntMap PullRequest
 
 data PullRequest = PR {
                     prText :: T.Text
@@ -42,8 +48,16 @@ data PullRequest = PR {
 
                   deriving (Show)
 
+instance Default PullRequest where
+  def = PR {
+            prText = ""
+          , prTitle = ""
+          , prRepo = ""
+          , prOwner = ""
+          , prID = 0
+  }
 
-fiveMinutes = 300000000
+fiveMinutes = 3000000
 
 getPRId = Just . fromIntegral . untagId . simplePullRequestId . (! 0)
 
@@ -52,15 +66,16 @@ getPRTitle = Just . simplePullRequestTitle . (! 0)
 getPRBody = simplePullRequestBody . (! 0)
 
 -- Converts a pull request into a dbus notification
-toNote :: Maybe PullWatch.PullWatch.PullRequest -> Maybe Note
+toNote :: PullWatch.PullWatch.PullRequest -> Note
 
-toNote Nothing = Nothing
-toNote (Just pr) =
-  Just $ blankNote {
+toNote pr =
+  blankNote {
       summary = T.unpack $ prRepo pr
     , body = (Just $ Text $ T.unpack $ prTitle pr)
     , appImage = (Just $ Icon "dialog-information")
   }
+
+notifyPR client pr = notify client pr
 
 getLatest :: (?pat :: (Maybe Auth.Auth)) =>
              (PR.Name PR.Owner) ->
@@ -80,19 +95,42 @@ getLatest owner repo = do
               return $ PR body title repoName repoOwner id
   return pr
 
-getLatestAsync owner repo = do
-    client <- connectSession
-
-    async $ poll client where
-      poll client = do
-        latest <- getLatest owner repo
-        notification <- maybe undefined (notify client) (toNote latest)
-        return $ prID <$> latest
-
 getLatestPRs :: (?pat :: (Maybe Auth.Auth)) =>
                 [(PR.Name PR.Owner, PR.Name PR.Repo)] ->
-                IO [Maybe (T.Text, T.Text, Integer)]
+                IO (Maybe PullRequests)
 
 getLatestPRs repos = do
   prs <- mapConcurrently (uncurry getLatest) repos
-  return $ map ((\pr -> (prRepo pr, prOwner pr, prID pr)) <$>) prs
+  return $ maybesToMap prs
+
+monitorPRs :: (?pat :: (Maybe Auth.Auth)) =>
+              Maybe PullRequests ->
+              [(PR.Name PR.Owner, PR.Name PR.Repo)] ->
+              IO ()
+
+monitorPRs previous repos = do
+  currentPRs <- getLatestPRs repos
+  client <- connectSession
+
+  -- print currentPRs
+  let difference = do {
+    currentPRs' <- currentPRs;
+    previousPRs' <- previous;
+    return $ IntMap.elems (previousPRs' \\ currentPRs');
+  }
+
+  maybe (return ()) (mapM_ (notifyPR client)) ((map toNote) <$> difference)
+
+  threadDelay fiveMinutes
+  monitorPRs currentPRs repos
+
+-- Helpers functions for converting to an IntMap
+prToTuple :: PullRequest -> (Int, PullRequest)
+
+prToTuple pr = (fromIntegral $ prID pr, pr)
+
+maybesToMap :: [Maybe PullRequest] -> Maybe PullRequests
+
+maybesToMap = ((IntMap.fromList .
+                map prToTuple ) <$>) .
+                sequence
