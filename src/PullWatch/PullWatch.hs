@@ -65,7 +65,7 @@ getPRTitle = Just . simplePullRequestTitle . (! 0)
 getPRBody = simplePullRequestBody . (! 0)
 
 -- Converts a pull request into a dbus notification
-toNote :: PullWatch.PullWatch.PullRequest -> Note
+toNote :: PullRequest -> Note
 
 toNote pr =
   blankNote {
@@ -74,13 +74,16 @@ toNote pr =
     , appImage = (Just $ Icon "dialog-information")
   }
 
-notifyPR client pr = notify client pr
+
+notifyPR client pr = (print $ (summary pr) ++ " was opened") >>
+                     notify client pr
 
 getLatest :: (?pat :: (Maybe Auth.Auth)) =>
              (PR.Name PR.Owner) ->
              (PR.Name PR.Repo) ->
              IO (Maybe PullRequest)
 
+-- TODO fix this crap
 getLatest owner repo = do
   prs <- PR.pullRequestsFor' ?pat owner repo
   let pr = case prs of
@@ -106,7 +109,6 @@ monitorPRs :: (?pat :: (Maybe Auth.Auth)) =>
               Maybe PullRequests ->
               [(PR.Name PR.Owner, PR.Name PR.Repo)] ->
               IO ()
-
 monitorPRs previous repos = do
   currentPRs <- getLatestPRs repos
   client <- connectSession
@@ -125,7 +127,7 @@ monitorPRs previous repos = do
   threadDelay tenMinutes
   monitorPRs currentPRs repos
 
--- Helpers functions for converting to an IntMap
+-- Helper functions for converting to an IntMap
 prToTuple :: PullRequest -> (Int, PullRequest)
 
 prToTuple pr = (fromIntegral $ prID pr, pr)

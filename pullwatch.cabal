@@ -37,7 +37,6 @@ library
     , base-compat
     , text
     , bytestring
-    , libiserv
     , vector
     , async
     , containers
@@ -59,7 +58,6 @@ executable pullwatch-exe
     , base-compat
     , text
     , bytestring
-    , libiserv
     , vector
     , async
     , containers
@@ -82,7 +80,6 @@ test-suite pullwatch-test
     , base-compat
     , text
     , bytestring
-    , libiserv
     , vector
     , async
     , containers
