@@ -24,12 +24,10 @@ import DBus.Notify
 import Data.Default
 import Data.IntMap (IntMap, (\\))
 import Data.Maybe
-import Data.Monoid
 import Data.Vector ((!?))
 import GitHub.Data.Id (untagId)
 import GitHub.Data.Name (untagName)
 import Prelude.Compat
-import System.Environment (lookupEnv)
 
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
