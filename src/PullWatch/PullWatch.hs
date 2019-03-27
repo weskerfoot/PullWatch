@@ -25,7 +25,7 @@ import Data.Default
 import Data.IntMap (IntMap, (\\))
 import Data.Maybe
 import Data.Monoid
-import Data.Vector ((!))
+import Data.Vector ((!?))
 import GitHub.Data.Id (untagId)
 import GitHub.Data.Name (untagName)
 import Prelude.Compat
@@ -58,11 +58,11 @@ instance Default PullRequest where
 
 tenMinutes = 300000000*2
 
-getPRId = Just . fromIntegral . untagId . simplePullRequestId . (! 0)
+getPRId = Just . fromIntegral . untagId . simplePullRequestId
 
-getPRTitle = Just . simplePullRequestTitle . (! 0)
+getPRTitle = Just . simplePullRequestTitle
 
-getPRBody = simplePullRequestBody . (! 0)
+getPRBody = simplePullRequestBody
 
 -- Converts a pull request into a dbus notification
 toNote :: PullRequest -> Note
@@ -83,17 +83,20 @@ getLatest :: (?pat :: (Maybe Auth.Auth)) =>
              (PR.Name PR.Repo) ->
              IO (Maybe PullRequest)
 
--- TODO fix this crap
 getLatest owner repo = do
   prs <- PR.pullRequestsFor' ?pat owner repo
   let pr = case prs of
             (Left _) -> Nothing
             (Right pullreqs) -> do
-              id <- getPRId pullreqs
-              title <- getPRTitle pullreqs
-              body <- getPRBody pullreqs
+              firstPR <- pullreqs !? 0
+
+              id <- getPRId firstPR
+              title <- getPRTitle firstPR
+              body <- getPRBody firstPR
+
               let repoName = untagName repo
               let repoOwner = untagName owner
+
               return $ PR body title repoName repoOwner id
   return pr
 
