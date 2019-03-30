@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module PullWatch.PullWatch
     (  getLatest
@@ -9,6 +10,8 @@ module PullWatch.PullWatch
      , prTitle
      , prID
      , monitorPRs
+     , parseRepoArgs
+     , RepoArgs(..)
     ) where
 
 import GitHub.Data.PullRequests
@@ -28,11 +31,16 @@ import Data.Vector ((!?))
 import GitHub.Data.Id (untagId)
 import GitHub.Data.Name (untagName)
 import Prelude.Compat
+import System.Console.ArgParser
+import System.Console.ArgParser.QuickParams (RawRead, rawParse)
+import GitHub.Data.Name
 
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
 import qualified GitHub.Auth as Auth
 import qualified GitHub.Endpoints.PullRequests as PR
+
+-- Type definitions
 
 type PullRequests = IntMap PullRequest
 
@@ -45,6 +53,11 @@ data PullRequest = PR {
                   }
 
                   deriving (Show)
+
+data RepoArgs = RepoArgs (PR.Name PR.Owner)
+                         (PR.Name PR.Repo)
+                  deriving (Show)
+
 instance Default PullRequest where
   def = PR {
             prText = ""
@@ -54,6 +67,21 @@ instance Default PullRequest where
           , prID = 0
   }
 
+instance RawRead (PR.Name a) where
+  rawParse x = Just (N $ T.pack x, x)
+
+
+-- Argument parser
+parseRepos :: ParserSpec RepoArgs
+
+parseRepos = RepoArgs
+  `parsedBy` reqPos "owner"
+  `andBy` reqPos "repo"
+
+parseRepoArgs = withParseResult parseRepos
+
+
+-- Helper functions
 tenMinutes = 300000000*2
 
 getPRId = Just . fromIntegral . untagId . simplePullRequestId

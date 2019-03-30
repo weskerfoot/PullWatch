@@ -34,6 +34,7 @@ library
   build-depends:
       base >=4.7 && <5
     , github
+    , argparser
     , base-compat
     , text
     , bytestring
@@ -55,6 +56,7 @@ executable pullwatch-exe
       base >=4.7 && <5
     , pullwatch
     , github
+    , argparser
     , base-compat
     , text
     , bytestring
@@ -77,6 +79,7 @@ test-suite pullwatch-test
       base >=4.7 && <5
     , pullwatch
     , github
+    , argparser
     , base-compat
     , text
     , bytestring
