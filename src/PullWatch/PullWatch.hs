@@ -48,7 +48,7 @@ parseRepoArgs = withParseResult parseRepos
 
 
 -- Helper functions
-tenMinutes = 300000000*2
+fiveMinutes = 300000000
 
 getPRId = Just . fromIntegral . untagId . simplePullRequestId
 
@@ -89,6 +89,8 @@ getLatest (Repo owner repo) = do
               let repoOwner = untagName owner
 
               return $ PR body title repoName repoOwner id
+
+  threadDelay fiveMinutes
   return pr
 
 getLatestPRs :: (?pat :: (Maybe Auth.Auth)) =>
@@ -118,7 +120,6 @@ monitorPRs previous repos = do
         (mapM_ (notifyPR client))
         ((map toNote) <$> difference)
 
-  threadDelay tenMinutes
   monitorPRs currentPRs repos
 
 -- Helper functions for converting to an IntMap
