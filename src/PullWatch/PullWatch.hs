@@ -21,7 +21,7 @@ import GitHub.Data.PullRequests
 
 import Control.Applicative
 import Control.Concurrent (threadDelay)
-import Control.Concurrent.Async
+import Control.Concurrent.Async.Pool
 import DBus.Notify
 import Data.Maybe
 import Data.Vector ((!?))
@@ -95,8 +95,8 @@ getLatestPRs :: (?pat :: (Maybe Auth.Auth)) =>
                 [Repo] ->
                 IO (Maybe PullRequests)
 
-getLatestPRs repos = do
-  prs <- mapConcurrently getLatest repos
+getLatestPRs repos = withTaskGroup 2 $ \g -> do
+  prs <- mapConcurrently g getLatest repos
   return $ maybesToMap prs
 
 monitorPRs :: (?pat :: (Maybe Auth.Auth)) =>
