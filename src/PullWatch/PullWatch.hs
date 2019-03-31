@@ -71,11 +71,10 @@ notifyPR client pr = (print $ (summary pr) ++ " was opened") >>
                      notify client pr
 
 getLatest :: (?pat :: (Maybe Auth.Auth)) =>
-             (PR.Name PR.Owner) ->
-             (PR.Name PR.Repo) ->
+             Repo ->
              IO (Maybe PullRequest)
 
-getLatest owner repo = do
+getLatest (Repo owner repo) = do
   prs <- PR.pullRequestsFor' ?pat owner repo
   let pr = case prs of
             (Left _) -> Nothing
@@ -93,16 +92,16 @@ getLatest owner repo = do
   return pr
 
 getLatestPRs :: (?pat :: (Maybe Auth.Auth)) =>
-                [(PR.Name PR.Owner, PR.Name PR.Repo)] ->
+                [Repo] ->
                 IO (Maybe PullRequests)
 
 getLatestPRs repos = do
-  prs <- mapConcurrently (uncurry getLatest) repos
+  prs <- mapConcurrently getLatest repos
   return $ maybesToMap prs
 
 monitorPRs :: (?pat :: (Maybe Auth.Auth)) =>
               Maybe PullRequests ->
-              [(PR.Name PR.Owner, PR.Name PR.Repo)] ->
+              [Repo] ->
               IO ()
 monitorPRs previous repos = do
   currentPRs <- getLatestPRs repos
