@@ -1,7 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE FlexibleInstances #-}
 
 module PullWatch.PullWatch
     (  getLatest
@@ -24,52 +23,19 @@ import Control.Applicative
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async
 import DBus.Notify
-import Data.Default
-import Data.IntMap (IntMap, (\\))
 import Data.Maybe
 import Data.Vector ((!?))
 import GitHub.Data.Id (untagId)
 import GitHub.Data.Name (untagName)
 import Prelude.Compat
 import System.Console.ArgParser
-import System.Console.ArgParser.QuickParams (RawRead, rawParse)
-import GitHub.Data.Name
+import PullWatch.Types
+import Data.IntMap ((\\))
 
 import qualified Data.IntMap as IntMap
 import qualified Data.Text as T
 import qualified GitHub.Auth as Auth
 import qualified GitHub.Endpoints.PullRequests as PR
-
--- Type definitions
-
-type PullRequests = IntMap PullRequest
-
-data PullRequest = PR {
-                    prText :: T.Text
-                  , prTitle :: T.Text
-                  , prRepo :: T.Text
-                  , prOwner :: T.Text
-                  , prID :: Integer
-                  }
-
-                  deriving (Show)
-
-data RepoArgs = RepoArgs (PR.Name PR.Owner)
-                         (PR.Name PR.Repo)
-                  deriving (Show)
-
-instance Default PullRequest where
-  def = PR {
-            prText = ""
-          , prTitle = ""
-          , prRepo = ""
-          , prOwner = ""
-          , prID = 0
-  }
-
-instance RawRead (PR.Name a) where
-  rawParse x = Just (N $ T.pack x, x)
-
 
 -- Argument parser
 parseRepos :: ParserSpec RepoArgs
