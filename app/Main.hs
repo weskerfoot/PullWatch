@@ -5,7 +5,7 @@ module Main where
 
 import PullWatch.PullWatch
 import PullWatch.Types
-import PullWatch.Environment (getPAT)
+import PullWatch.Environment (getPAT, getRepoConfig)
 import qualified Data.Default as Default (def)
 
 doMonitor :: RepoArgs -> IO ()
@@ -14,7 +14,12 @@ doMonitor (RepoArgs owner repo) = do
   pat <- getPAT
   let ?pat = pat
 
-  monitorPRs Default.def [Repo owner repo]
+  repoConfig <- getRepoConfig
+
+  case repoConfig of
+    Nothing -> monitorPRs Default.def [Repo owner repo]
+    (Just repos) -> monitorPRs Default.def $ [Repo owner repo] ++ repos
+
 
   return ()
 
