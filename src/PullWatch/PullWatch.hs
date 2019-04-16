@@ -41,11 +41,10 @@ import qualified GitHub.Endpoints.PullRequests as PR
 parseRepos :: ParserSpec RepoArgs
 
 parseRepos = RepoArgs
-  `parsedBy` reqPos "owner"
-  `andBy` reqPos "repo"
+  `parsedBy` optPos "" "owner"
+  `andBy` optPos "" "repo"
 
 parseRepoArgs = withParseResult parseRepos
-
 
 -- Helper functions
 fiveMinutes = 300000000
@@ -74,6 +73,7 @@ getLatest :: (?pat :: (Maybe Auth.Auth)) =>
              Repo ->
              IO (Maybe PullRequest)
 
+getLatest (Repo "" "") = return Nothing
 getLatest (Repo owner repo) = do
   prs <- PR.pullRequestsFor' ?pat owner repo
   let pr = case prs of
